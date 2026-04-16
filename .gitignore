@@ -2,3 +2,4 @@
 lingbot-va-*/
 train_out/
 
+*.pyc

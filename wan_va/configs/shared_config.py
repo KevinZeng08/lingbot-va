@@ -12,4 +12,4 @@ va_shared_cfg.save_root = './train_out'
 
 va_shared_cfg.patch_size = (1, 2, 2)
 
-va_shared_cfg.enable_offload = True
+va_shared_cfg.enable_offload = False

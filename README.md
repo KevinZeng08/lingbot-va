@@ -19,6 +19,30 @@ https://github.com/user-attachments/assets/cec7b7a6-953b-4fa4-8f1a-47efc1fce547
 
 
 
+## Table of Contents
+
+- [News](#-news)
+- [Model Download](#-model-download)
+- [Quick Start](#️-quick-start)
+  - [Installation](#installation)
+  - [attn_mode Configuration](#️-important-attn_mode-configuration)
+  - [Deploying LingBot-VA for Inference](#deploying-lingbot-va-for-inference)
+    - [Evaluation on RoboTwin-2.0](#evaluation-on-robotwin-20)
+    - [Evaluation on LIBERO](#evaluation-on-libero)
+    - [Run Image to Video-Action Generation](#run-image-to-video-action-generation)
+  - [Post-Training LingBot-VA](#post-training-lingbot-va)
+    - [Data Preparation](#data-preparation)
+    - [Custom Dataset Preparation](#custom-dataset-preparation)
+    - [Training](#training)
+- [Performance](#-performance)
+  - [Simulation Evaluation](#simulation-evaluation)
+  - [Real-world Deployment](#real-world-deployment)
+- [License](#-license)
+- [Citation](#citation)
+- [Acknowledgments](#-acknowledgments)
+
+---
+
 ## 💫 Meet **LingBot-VA**!  We've built an AR diffusion framework for simultaneous world modeling and action! 🤖✨
 
 **LingBot-VA** has focused on:
@@ -27,6 +51,7 @@ https://github.com/user-attachments/assets/cec7b7a6-953b-4fa4-8f1a-47efc1fce547
 - **Long-Horizon Performance and Generalization**: High improvements in sample efficiency, long-horizon success rates, and generalization to novel scenes.
 
 # 🚀 News
+- **[2026-04-08]** Post-training and inference code for the **LIBERO** dataset is now available!
 - **[2026-02-17]** Post-training code and dataset released! Support fine-tuning LingBot-VA on custom robotic manipulation datasets.
 - **[2026-01-29]** Weights and code for shared backbone released! Please stay tuned for our separated version!
 
@@ -101,58 +126,58 @@ You can follow the official instructions from the original RoboTwin-2.0 reposito
 
 In summary:
 
-1. 
-```bash
-sudo apt install libvulkan1 mesa-vulkan-drivers vulkan-tools
-```
+1. Install Vulkan dependencies:
+   ```bash
+   sudo apt install libvulkan1 mesa-vulkan-drivers vulkan-tools
+   ```
 
-2. 
-```bash
-git clone https://github.com/RoboTwin-Platform/RoboTwin.git && cd RoboTwin && git checkout 2eeec322
-```
+2. Clone the RoboTwin repository:
+   ```bash
+   git clone https://github.com/RoboTwin-Platform/RoboTwin.git && cd RoboTwin && git checkout 2eeec322
+   ```
 
-3. modify script/requirements.txt 
-```bash
-transforms3d==0.4.2
-sapien==3.0.0b1
-scipy==1.10.1
-mplib==0.2.1
-gymnasium==0.29.1
-trimesh==4.4.3
-open3d==0.18.0
-imageio==2.34.2
-pydantic
-zarr
-openai
-huggingface_hub==0.36.2
-h5py
-# For Description Generation
-azure==4.0.0
-azure-ai-inference
-pyglet<2
-wandb
-moviepy
-imageio
-termcolor
-av
-matplotlib
-ffmpeg
-```
+3. Modify `script/requirements.txt` with the following content:
+   ```txt
+   transforms3d==0.4.2
+   sapien==3.0.0b1
+   scipy==1.10.1
+   mplib==0.2.1
+   gymnasium==0.29.1
+   trimesh==4.4.3
+   open3d==0.18.0
+   imageio==2.34.2
+   pydantic
+   zarr
+   openai
+   huggingface_hub==0.36.2
+   h5py
+   # For Description Generation
+   azure==4.0.0
+   azure-ai-inference
+   pyglet<2
+   wandb
+   moviepy
+   imageio
+   termcolor
+   av
+   matplotlib
+   ffmpeg
+   ```
 
-4. modify line 8 of script/_install.sh:
-```bash
-pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" --no-build-isolation
-```
+4. Modify line 8 of `script/_install.sh`:
+   ```bash
+   pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" --no-build-isolation
+   ```
 
-5. run:
-```bash
-bash script/_install.sh
-```
+5. Install dependencies:
+   ```bash
+   bash script/_install.sh
+   ```
 
-6. run:
-```bash
-bash script/_download_assets.sh
-```
+6. Download assets:
+   ```bash
+   bash script/_download_assets.sh
+   ```
 
  **Deploying the Inference Server**
 ```bash
@@ -180,6 +205,20 @@ Related experiments results will be save in `/path/to/your/RoboTwin/${save_root}
 It is important to note that the inference server and client must be deployed on the same machine. For launching multi-GPU client, we padded the original 50 tasks to 56 via duplication and partitioned them into 7 groups to align with the 8-GPU configuration of our inference node. You can specify the `task_group_id` (0-6) to select a particular group for inference. For detailed grouping configurations, please refer to `evaluation/robotwin/launch_client_multigpus.sh`.
 
 > **GPU Memory Requirements**: Approximately **24GB VRAM** for single-GPU RoboTwin evaluation with offload mode enabled (VAE and text_encoder offloaded to CPU).
+
+
+### Evaluation on LIBERO
+For LIBERO, we recommend using the following training dataset:
+[LIBERO LONG](https://drive.google.com/file/d/1QGNkvsb1hlRmRkKCgFlyWitv17sRuagS/view?usp=sharing)
+
+
+```bash
+# server
+bash evaluation/libero/launch_server.sh
+
+# client
+bash evaluation/libero/launch_client.sh
+```
 
 ### Run Image to Video-Action Generation
 
@@ -326,7 +365,11 @@ The latent file naming convention `episode_{index}_{start_frame}_{end_frame}.pth
 ### Training
 
 ```bash
-NGPU=8 bash script/run_va_posttrain.sh
+# RoboTwin
+NGPU=8 CONFIG_NAME='robotwin_train' bash script/run_va_posttrain.sh
+
+# LIBERO
+NGPU=8 CONFIG_NAME='libero_train' bash script/run_va_posttrain.sh
 ```
 
 For better training performance, use a larger global batch size (e.g., 32, 64). If you have limited GPU resources, you can increase `gradient_accumulation_steps` to achieve a larger effective batch size.
