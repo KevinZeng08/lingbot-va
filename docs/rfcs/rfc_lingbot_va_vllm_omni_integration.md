@@ -357,6 +357,11 @@ class LingBotVAPipeline(nn.Module, CFGParallelMixin):
 
 ### 5.5 权重加载
 
+> ⚠️ **前置要求（与 README 保持一致）**
+>
+> 推理/评测前，必须将 `<model_path>/transformer/config.json` 中的 `attn_mode` 从 `"flex"` 改为 `"flashattn"`（或 `"torch"`）。
+> `"flex"` 仅用于训练，若不修改会在推理阶段报错。
+
 LingBot-VA 的 checkpoint 布局为标准 diffusers 格式（与 Wan2.2 基本兼容）：
 
 ```
@@ -383,6 +388,7 @@ def load_weights(self, weights):
     # text_encoder: 直接加载（标准 UMT5）
     # vae: 直接加载（标准 AutoencoderKLWan）
     # transformer: 逐键映射
+    # 注意: 加载前需确保 transformer/config.json 的 attn_mode != "flex"
     for name, tensor in weights:
         if name.startswith("transformer."):
             # 处理 TP 分片
