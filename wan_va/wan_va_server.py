@@ -1,6 +1,7 @@
 # Copyright 2024-2025 The Robbyant Team Authors. All rights reserved.
 import argparse
 import os
+import random
 import sys
 import time
 from functools import partial
@@ -36,6 +37,14 @@ from utils import (
     run_async_server_mode,
     save_async,
 )
+
+
+def _set_seed(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    logger.info(f"Random seed set to {seed}")
 
 
 class VA_Server:
@@ -683,10 +692,12 @@ def run(args):
     rank = int(os.getenv("RANK", 0))
     local_rank = int(os.environ.get('LOCAL_RANK', 0))
     world_size = int(os.environ.get("WORLD_SIZE", 1))
+    _set_seed(args.seed)
     init_distributed(world_size, local_rank, rank)
     config.rank = rank
     config.local_rank = local_rank
     config.world_size = world_size
+    config.seed = args.seed
     model = VA_Server(config)
     if config.infer_mode == 'i2va':
         logger.info(f"******************************USE I2AV mode******************************")
@@ -720,6 +731,12 @@ def main():
         type=str,
         default=None,
         help='save root'
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=42,
+        help='random seed'
     )
     args = parser.parse_args()
     run(args)
