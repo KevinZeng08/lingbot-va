@@ -1,1 +1,5 @@
 *.pyc
+*.pt
+*.mp4
+# model
+lingbot-va-posttrain-robotwin/

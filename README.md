@@ -167,9 +167,13 @@ In summary:
    ffmpeg
    ```
 
-4. Modify line 8 of `script/_install.sh`:
+4. Modify line 8 and 52 of `script/_install.sh`:
    ```bash
    pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable" --no-build-isolation
+   ```
+
+   ```bash
+   git clone --branch v0.7.8 --depth 1 https://github.com/NVlabs/curobo.git
    ```
 
 5. Install dependencies:
